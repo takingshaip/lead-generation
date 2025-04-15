@@ -14,8 +14,10 @@ function App() {
   };
 
   const handleCSVUpload = (csvData) => {
+    console.log("Received from uploader:", csvData);
     setOrganizations((prev) => [...prev, ...csvData]);
   };
+
 
   const handleDeleteOrganization = (index) => {
     const updated = [...organizations];
