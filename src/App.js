@@ -63,7 +63,8 @@ function App() {
 
 
     try {
-      const response = await fetch("http://localhost:3001/lead-generation/scrape-and-send", {
+      console.log(process.env.REACT_APP_API_URL);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/lead-generation/scrape-and-send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
