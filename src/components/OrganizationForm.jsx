@@ -115,9 +115,7 @@ export default function OrganizationForm({ onAddOrganization, initialOrganizatio
         ))}
       </List>
 
-      <Button startIcon={<AddIcon />} onClick={handleAddLink} sx={{ mt: 1, mb: 3 }}>
-        Add Another Link
-      </Button>
+
 
       <Divider sx={{ my: 2 }} />
 
