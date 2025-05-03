@@ -9,6 +9,12 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 
@@ -16,6 +22,22 @@ export default function OrganizationForm({ onAddOrganization, initialOrganizatio
   const [name, setName] = useState(initialOrganization?.name || "");
   const [links, setLinks] = useState(initialOrganization?.links || [""]);
   const [nameError, setNameError] = useState("");
+  const [includeGeneric, setIncludeGeneric] = useState(initialOrganization?.includeGeneric ?? "yes");
+  const [allDesignations, setAllDesignations] = useState(initialOrganization?.allDesignations ?? true);
+  const [designations, setDesignations] = useState(initialOrganization?.designations || []);
+  const [customDesignations, setCustomDesignations] = useState(initialOrganization?.customDesignations || "");
+  const [designationError, setDesignationError] = useState("");
+
+  const designationOptions = [
+    "Professor",
+    "Associate Professor",
+    "Assistant Professor",
+    "Dean",
+    "Head",
+    "Principal",
+    "HOD",
+    "CEO",
+  ];
 
   const handleAddLink = () => setLinks([...links, ""]);
 
@@ -27,8 +49,7 @@ export default function OrganizationForm({ onAddOrganization, initialOrganizatio
 
   const handleRemoveLink = (index) => {
     if (links.length > 1) {
-      const updatedLinks = [...links];
-      updatedLinks.splice(index, 1);
+      const updatedLinks = links.filter((_, i) => i !== index);
       setLinks(updatedLinks);
     }
   };
@@ -43,16 +64,42 @@ export default function OrganizationForm({ onAddOrganization, initialOrganizatio
       setNameError("");
     }
 
+    if (!allDesignations && designations.length === 0 && !customDesignations.trim()) {
+      setDesignationError("Select at least one designation or choose All Designations");
+      return;
+    } else {
+      setDesignationError("");
+    }
+
     const filteredLinks = links.filter((link) => link.trim() !== "");
+    const finalDesignations = allDesignations
+      ? ["all"]
+      : [
+        ...new Set([
+          ...designations,
+          ...customDesignations
+            .split(",")
+            .map((d) => d.trim())
+            .filter((d) => d),
+        ]),
+      ];
 
     onAddOrganization({
       name: name.trim(),
       links: filteredLinks.length > 0 ? filteredLinks : [""],
+      includeGeneric: includeGeneric === "yes",
+      designations: finalDesignations,
+      allDesignations,
+      customDesignations,
     });
 
     if (!isEditing) {
       setName("");
       setLinks([""]);
+      setIncludeGeneric("yes");
+      setAllDesignations(true);
+      setDesignations([]);
+      setCustomDesignations("");
     } else if (onCancelEdit) {
       onCancelEdit();
     }
@@ -115,7 +162,82 @@ export default function OrganizationForm({ onAddOrganization, initialOrganizatio
         ))}
       </List>
 
+      <Button
+        startIcon={<AddIcon />}
+        onClick={handleAddLink}
+        sx={{ mb: 2 }}
+        disabled={links[links.length - 1] === ""}
+      >
+        Add Link
+      </Button>
 
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Include Generic Information</InputLabel>
+        <Select
+          value={includeGeneric}
+          onChange={(e) => setIncludeGeneric(e.target.value)}
+          label="Include Generic Information"
+        >
+          <MenuItem value="yes">Yes</MenuItem>
+          <MenuItem value="no">No</MenuItem>
+        </Select>
+      </FormControl>
+
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={allDesignations}
+            onChange={(e) => setAllDesignations(e.target.checked)}
+          />
+        }
+        label="All Designations"
+        sx={{ mt: 2, mb: 1 }}
+      />
+
+      {!allDesignations && (
+        <>
+          <FormControl fullWidth margin="normal" error={!!designationError}>
+            <InputLabel>Select Designations</InputLabel>
+            <Select
+              multiple
+              value={designations}
+              onChange={(e) => {
+                setDesignations(e.target.value);
+                if (e.target.value.length > 0 || customDesignations.trim()) {
+                  setDesignationError("");
+                }
+              }}
+              label="Select Designations"
+              renderValue={(selected) => selected.join(", ")}
+            >
+              {designationOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+            {designationError && (
+              <Typography color="error" variant="caption">
+                {designationError}
+              </Typography>
+            )}
+          </FormControl>
+
+          <TextField
+            fullWidth
+            label="Custom Designations (comma-separated)"
+            value={customDesignations}
+            onChange={(e) => {
+              setCustomDesignations(e.target.value);
+              if (e.target.value.trim() || designations.length > 0) {
+                setDesignationError("");
+              }
+            }}
+            margin="normal"
+            placeholder="e.g., Registrar,Director"
+          />
+        </>
+      )}
 
       <Divider sx={{ my: 2 }} />
 

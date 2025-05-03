@@ -1,57 +1,41 @@
 import { useState } from "react";
-import { Container, Typography, Box, Paper, Button, TextField } from "@mui/material";
-import OrganizationForm from "./components/OrganizationForm.jsx";
-import OrganizationList from "./components/OrganizationList.jsx";
-import CSVUploader from "./components/CSVUploader.jsx";
-import { ThemeProvider } from "./components/ThemeProvider.jsx";
+import {
+  Container,
+  Typography,
+  Box,
+  Paper,
+  Button,
+  TextField,
+} from "@mui/material";
+import OrganizationForm from "./components/OrganizationForm";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 function App() {
   const [organizations, setOrganizations] = useState([]);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleAddOrganization = (organization) => {
     setOrganizations((prev) => [...prev, organization]);
   };
 
-  const handleCSVUpload = (csvData) => {
-    console.log("Received from uploader:", csvData);
-    setOrganizations((prev) => [...prev, ...csvData]);
-  };
-
-
-  const handleDeleteOrganization = (index) => {
-    const updated = [...organizations];
-    updated.splice(index, 1);
-    setOrganizations(updated);
-  };
-
-  const handleEditOrganization = (index, updatedOrganization) => {
-    const updated = [...organizations];
-    updated[index] = updatedOrganization;
-    setOrganizations(updated);
-  };
-
   const handleSubmitToBackend = async () => {
-    if (!email.trim()) {
-      alert("Email is required.");
+    setMessage("");
+    setError("");
+
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Please enter a valid email");
       return;
+    } else {
+      setEmailError("");
     }
 
     if (organizations.length === 0) {
-      alert("No organizations to submit.");
+      setError("No organizations to submit");
       return;
     }
-
-    // Group by organization name
-    const grouped = {};
-    organizations.forEach((org) => {
-      const name = org.name.trim();
-      if (!name) return;
-      if (!grouped[name]) grouped[name] = new Set();
-      org.links.forEach((link) => {
-        if (link.trim()) grouped[name].add(link.trim());
-      });
-    });
 
     const payload = {
       email: email.trim(),
@@ -59,26 +43,35 @@ function App() {
         organizationname: org.name.trim(),
         links: org.links.map((link) => link.trim()).filter((l) => !!l),
       })),
+      includeGeneric: organizations[0].includeGeneric,
+      designations: organizations[0].designations,
     };
+
     console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     try {
-      console.log(process.env.REACT_APP_API_URL);
       const response = await fetch(`${process.env.REACT_APP_API_URL}/lead-generation/scrape-and-send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
 
       const result = await response.json();
       console.log("Success:", result);
-      alert("Submitted successfully!");
+      setMessage("Submitted successfully!");
       setOrganizations([]);
-    } catch (error) {
-      console.error("Submission failed:", error);
-      alert("Submission failed. Check the console.");
+      setEmail("");
+    } catch (err) {
+      console.error("API Error:", {
+        message: err.message,
+        status: err.response?.status,
+        url: `${process.env.REACT_APP_API_URL}/lead-generation/scrape-and-send`,
+      });
+      setError(`Failed to process request: ${err.message}`);
     }
   };
 
@@ -90,33 +83,62 @@ function App() {
             Organization Manager
           </Typography>
 
-          {/* Global email input */}
           <TextField
             fullWidth
             label="Email *"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value)) {
+                setEmailError("");
+              }
+            }}
             margin="normal"
+            error={!!emailError}
+            helperText={emailError}
             required
           />
-
-          <CSVUploader onCSVUpload={handleCSVUpload} />
 
           <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
             <OrganizationForm onAddOrganization={handleAddOrganization} />
           </Paper>
 
-          <OrganizationList
-            organizations={organizations}
-            onDeleteOrganization={handleDeleteOrganization}
-            onEditOrganization={handleEditOrganization}
-          />
+          {organizations.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Added Organizations
+              </Typography>
+              {organizations.map((org, index) => (
+                <Box key={index} sx={{ mb: 1 }}>
+                  <Typography>
+                    {org.name} - Links: {org.links.join(", ")} | Generic: {org.includeGeneric ? "Yes" : "No"} | Designations: {org.allDesignations ? "All" : org.designations.join(", ")}{org.customDesignations ? `, ${org.customDesignations}` : ""}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-            <Button variant="contained" color="secondary" onClick={handleSubmitToBackend}>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSubmitToBackend}
+              disabled={organizations.length === 0}
+            >
               Submit
             </Button>
           </Box>
+
+          {message && (
+            <Typography color="success.main" sx={{ mt: 2 }}>
+              {message}
+            </Typography>
+          )}
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
         </Box>
       </Container>
     </ThemeProvider>
