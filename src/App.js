@@ -60,7 +60,7 @@ function App() {
         links: org.links.map((link) => link.trim()).filter((l) => !!l),
       })),
     };
-
+    console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     try {
       console.log(process.env.REACT_APP_API_URL);
