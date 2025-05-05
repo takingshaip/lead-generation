@@ -37,6 +37,9 @@ export default function OrganizationForm({ onAddOrganization, initialOrganizatio
     "Principal",
     "HOD",
     "CEO",
+    "Chairman",
+    "Counsellor",
+    "Vice-Counsellor"
   ];
 
   const handleAddLink = () => setLinks([...links, ""]);
