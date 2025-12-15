@@ -546,7 +546,7 @@ function App() {
       ];
       
     // The endpoint path provided in the previous interaction
-    const API_ENDPOINT = '/lead-generation/scrape-and-send'; 
+    const API_ENDPOINT = '${process.env.REACT_APP_API_URL}/lead-generation/scrape-and-send'; 
 
     setSnackbarMessage("Submitting request and processing organizations...");
     setSnackbarSeverity("info");
