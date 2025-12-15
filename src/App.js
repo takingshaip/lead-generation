@@ -502,13 +502,18 @@ function App() {
       return;
     }
 
-    if (!allDesignations && designations.length === 0 && !customDesignations.trim()) {
-      setDesignationError("Select at least one designation or choose All Designations");
-      setSnackbarMessage("Select at least one designation or choose All Designations");
-      setSnackbarSeverity("error");
-      setOpenSnackbar(true);
-      setLoading(false);
-      return;
+    if (!allDesignations) {
+      // Only validate if "All Designations" is NOT selected
+      if (designations.length === 0 && !customDesignations.trim()) {
+        setDesignationError("Select at least one designation or enter a custom designation.");
+        setSnackbarMessage("Select at least one designation or enter a custom designation.");
+        setSnackbarSeverity("error");
+        setOpenSnackbar(true);
+        setLoading(false);
+        return;
+      } else {
+        setDesignationError("");
+      }
     } else {
       setDesignationError("");
     }
@@ -546,7 +551,7 @@ function App() {
       ];
       
     // The endpoint path provided in the previous interaction
-    const API_ENDPOINT = '${process.env.REACT_APP_API_URL}/lead-generation/scrape-and-send'; 
+    const API_ENDPOINT = `${process.env.REACT_APP_API_URL}/lead-generation/scrape-and-send`; 
 
     setSnackbarMessage("Submitting request and processing organizations...");
     setSnackbarSeverity("info");
@@ -557,7 +562,7 @@ function App() {
       data: validOrganizations,
       includeGeneric,
       findAddress,
-      designations: finalDesignations.join(', '), 
+      designations: finalDesignations, // <-- send as array, not string
     };
 
     try {
