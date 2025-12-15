@@ -50,8 +50,8 @@ const fetchWithRetry = async (url, options) => {
     try {
       const response = await fetch(url, options);
       if (response.status === 400 || response.status === 404) {
-          // Do not retry on client-side errors (Bad Request, Not Found)
-          return response;
+        // Do not retry on client-side errors (Bad Request, Not Found)
+        return response;
       }
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -59,14 +59,15 @@ const fetchWithRetry = async (url, options) => {
       return response;
     } catch (error) {
       // Retrying logic (no console logs for retry errors to keep console clean)
+      // Add delay before next retry, except after last attempt
       if (i < maxRetries - 1) {
         await new Promise(resolve => setTimeout(resolve, delayTime));
         delayTime *= 2; // Exponential backoff
-      } else {
-        throw error; // Re-throw the error after final attempt
       }
     }
   }
+  // If all retries fail, throw an error
+  throw new Error('Failed to fetch after retries');
 };
 
 
@@ -203,7 +204,7 @@ function App() {
   const [organizations, setOrganizations] = useState([]);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [message, setMessage] = useState("");
+  const [, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
