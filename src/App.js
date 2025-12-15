@@ -44,13 +44,14 @@ const appId = 'local-lead-app'; // Placeholder app ID
 // Helper function for exponential backoff retry logic
 const fetchWithRetry = async (url, options) => {
   const maxRetries = 3;
-  let delayTime = 1000;
+  let delayTime = 1000; 
 
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+ 
   for (let i = 0; i < maxRetries; i++) {
     try {
       const response = await fetch(url, options);
       if (response.status === 400 || response.status === 404) {
-        // Do not retry on client-side errors (Bad Request, Not Found)
         return response;
       }
       if (!response.ok) {
@@ -58,15 +59,12 @@ const fetchWithRetry = async (url, options) => {
       }
       return response;
     } catch (error) {
-      // Retrying logic (no console logs for retry errors to keep console clean)
-      // Add delay before next retry, except after last attempt
       if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, delayTime));
-        delayTime *= 2; // Exponential backoff
+        await delay(delayTime);
+        delayTime *= 2;
       }
     }
   }
-  // If all retries fail, throw an error
   throw new Error('Failed to fetch after retries');
 };
 
