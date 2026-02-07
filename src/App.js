@@ -40,6 +40,10 @@ import {
 // Use a placeholder ID since we are not using Firebase auth
 const placeholderUserId = 'user-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9));
 const appId = 'local-lead-app'; // Placeholder app ID
+const STATIC_LOGIN = {
+  email: process.env.REACT_APP_LOGIN_EMAIL,
+  password: process.env.REACT_APP_LOGIN_PASSWORD,
+};
 
 // Helper function for exponential backoff retry logic
 const fetchWithRetry = async (url, options) => {
@@ -228,6 +232,10 @@ function App() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingOrganization, setEditingOrganization] = useState(null);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   // Use a simple state for "authentication" readiness
   const isAuthReady = true; // Always ready since we removed Firebase
@@ -611,6 +619,83 @@ function App() {
     }
   };
 
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    const normalizedEmail = loginEmail.trim().toLowerCase();
+    const normalizedStaticEmail = STATIC_LOGIN.email.toLowerCase();
+    if (normalizedEmail === normalizedStaticEmail && loginPassword === STATIC_LOGIN.password) {
+      setIsAuthenticated(true);
+      setLoginEmail("");
+      setLoginPassword("");
+      setLoginError("");
+    } else {
+      setLoginError("Invalid email or password.");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider>
+        <Container maxWidth="sm">
+          <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center" }}>
+            <Paper elevation={3} sx={{ p: 4, width: "100%" }}>
+              <Typography variant="h5" gutterBottom align="center">
+                Sign In
+              </Typography>
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+                Enter the static credentials to access the tool.
+              </Typography>
+              <Box component="form" onSubmit={handleLoginSubmit}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => {
+                    setLoginEmail(e.target.value);
+                    if (loginError) setLoginError("");
+                  }}
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => {
+                    setLoginPassword(e.target.value);
+                    if (loginError) setLoginError("");
+                  }}
+                  margin="normal"
+                  required
+                />
+                {loginError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {loginError}
+                  </Alert>
+                )}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  type="submit"
+                  fullWidth
+                  sx={{ mt: 3 }}
+                >
+                  Sign In
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        </Container>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider>
       <Container maxWidth="md">
@@ -624,6 +709,11 @@ function App() {
             <Typography variant="caption" color="text.secondary">
               User ID: {placeholderUserId} (Local Session)
             </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+            <Button variant="outlined" color="inherit" size="small" onClick={handleLogout}>
+              Logout
+            </Button>
           </Box>
 
           <TextField
