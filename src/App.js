@@ -646,9 +646,7 @@ function App() {
               <Typography variant="h5" gutterBottom align="center">
                 Sign In
               </Typography>
-              <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-                Enter the static credentials to access the tool.
-              </Typography>
+             
               <Box component="form" onSubmit={handleLoginSubmit}>
                 <TextField
                   fullWidth
